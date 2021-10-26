@@ -8,16 +8,16 @@ from marshmallow import ValidationError
 
 from backend.models.db import db
 from backend.schemas.ma import ma
-from backend.resources.user import UserList
+from backend.resources.leave import LeaveList
 
 app = Flask(__name__)
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///:memory:'
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///:memory:' # use memory for debug
 
 bluePrint = Blueprint('api', __name__)
 api = Api(bluePrint)
 app.register_blueprint(bluePrint)
 
-api.add_resource(UserList, '/all')
+api.add_resource(LeaveList, '/all')
 
 
 @app.before_first_request

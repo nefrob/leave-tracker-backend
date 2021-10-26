@@ -9,5 +9,5 @@ from backend.models.user import User
 class UserSchema(ma.Schema):
     class Meta:
         model = User
-        fields = ('id', 'start_date', 'end_date')
+        fields = ('id')
         load_instance = True
