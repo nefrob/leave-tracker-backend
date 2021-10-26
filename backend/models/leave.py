@@ -6,7 +6,7 @@ from datetime import datetime
 from typing import List
 
 from backend.models.db import db
-from backend.models.user import User
+from backend.models.user import User # needed for relationship
 
 
 class Leave(db.Model):
