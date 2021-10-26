@@ -14,7 +14,7 @@ ALL_URL = 'http://localhost:5000/all'
 Unit tests
 '''
 class ApiTests(unittest.TestCase):
-    def empty_db_test(self):
+    def test_empty_db(self):
         '''
         Assert database is empty
         '''

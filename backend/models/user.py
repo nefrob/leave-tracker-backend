@@ -10,7 +10,7 @@ from backend.models.db import db
 
 class User(db.Model):
     '''
-    
+    Define user leave fields
     '''
     __tablename__ = 'user_table'
 
@@ -19,7 +19,7 @@ class User(db.Model):
     end_date = db.Column('end_date', db.DateTime, nullable=False)
 
     # todo: make id the only primary key with an array of start/end dates
-    # leaves = db.Column('leaves', db.ARRARY(db.DateTime, dimensions=2), nullable=False)
+    # leaves = db.Column('leaves', db.ARRAY(db.DateTime, dimensions=2), nullable=False)
 
     # todo: other user data like username, password, etc.
 
