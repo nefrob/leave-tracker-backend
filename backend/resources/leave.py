@@ -13,7 +13,7 @@ leave_schema = LeaveSchema()
 leave_list_schema = LeaveSchema(many=True)
 
 
-def update_leave(id, leave, json_data):
+def update_leave(leave, json_data):
     '''
     Update a leave entry
     '''
@@ -74,14 +74,15 @@ class LeaveResource(Resource):
         '''
         Update leave entry
         '''
-        json_data = request.get_json()
-
-        if not json_data:
+        json_data = None
+        try:
+            json_data = request.get_json()
+        except:
             return {'message': 'No leave data provided'}, 400
         
         leave = LeaveModel.get_leave(id)
         if leave:
-           return update_leave(id, leave, json_data)
+           return update_leave(leave, json_data)
         else:
             return {'message': 'Leave not found'}, 404
     
@@ -103,9 +104,10 @@ class LeaveCreateResource(Resource):
         '''
         Create a new leave entry
         '''
-        json_data = request.get_json()
-
-        if not json_data:
+        json_data = None
+        try:
+            json_data = request.get_json()
+        except:
             return {'message': 'No leave data provided'}, 400
 
         return create_leave(json_data)

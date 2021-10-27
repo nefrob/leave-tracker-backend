@@ -8,8 +8,8 @@ from marshmallow import ValidationError
 
 from backend.models.db import db
 from backend.schemas.ma import ma
-from backend.resources.user import UserResource, LeaveCreateResource, UserListResource
-from backend.resources.leave import LeaveResource, LeaveListResource
+from backend.resources.user import UserResource, UserListResource
+from backend.resources.leave import LeaveResource, LeaveCreateResource, LeaveListResource
 
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///:memory:' # use memory for debug
