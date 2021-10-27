@@ -16,7 +16,7 @@ class UserModel(db.Model):
     id = db.Column('id', db.Integer, primary_key=True)
     # todo: other user data like username, password hash, etc.
 
-    children = db.relationship('LeaveModel')
+    children = db.relationship('LeaveModel', cascade='all,delete')
 
     def __init__(self) -> None:
         '''

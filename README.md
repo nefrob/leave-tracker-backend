@@ -15,7 +15,7 @@ python3 backend/server.py
 ```
 
 ```
-python3 test/test.py
+python3 -m unittest
 ```
 
 ### Implementation Notes
