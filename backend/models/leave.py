@@ -5,7 +5,6 @@ Leave database entry model
 from datetime import datetime, timedelta
 from typing import List
 from sqlalchemy import and_, or_
-from sqlalchemy.sql.expression import nullslast
 
 from backend.models.db import db
 from backend.models.user import UserModel # needed for foreign key relationship
@@ -132,6 +131,8 @@ class LeaveModel(db.Model):
                     cls.end_date >= date_from
                 )
             )
+        ).order_by(
+            cls.start_date
         ).all()
 
 
