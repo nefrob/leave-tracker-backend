@@ -133,6 +133,17 @@ class LeaveRemainingResource(Resource):
         return {'remaining': remaining}, 200
 
 
+class LeaveScheduledResource(Resource):
+    def get(self, user_id: int, date_from_str: str):
+        '''
+        Get scheduled leave for a user from the provided date onwards.
+        Leave straddling the provided date is included.
+        '''
+        date_from = LeaveModel.str_to_datetime(date_from_str)
+        scheduled = LeaveModel.get_leave_from(user_id, date_from)
+        return leave_list_schema.dump(scheduled), 200
+
+
 class LeaveListResource(Resource):
     def get(self):
         '''

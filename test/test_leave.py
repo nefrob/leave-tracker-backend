@@ -13,6 +13,7 @@ HEADERS = {'Content-Type': 'application/json'}
 LEAVE_URL = 'http://localhost:5000/leave'
 LEAVE_CREATE_URL = 'http://localhost:5000/leave/create'
 LEAVE_REMAINING_URL = 'http://localhost:5000/leave/remaining'
+LEAVE_SCHEDULED_URL = 'http://localhost:5000/leave/scheduled'
 LEAVE_LIST_URL = 'http://localhost:5000/leave/list'
 
 USER_ID = '1'
@@ -43,7 +44,7 @@ def add_leave(start_date, end_date):
             'end_date': end_date,
             'user_id': USER_ID},
         headers=HEADERS)
-        
+
     return response.json()['id']
 
 
@@ -344,6 +345,56 @@ class LeaveRemainingTests(unittest.TestCase):
 
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.json(), {'remaining': MAX_YEARLY_LEAVE.days})
+
+
+class LeaveScheduledTests(unittest.TestCase):
+    '''
+    Leave scheduled unit tests
+    '''
+    def test_leave_get_scheduled(self):
+        '''
+        Get scheduled leave for a user
+        '''
+        clear_leaves()
+
+        add_leave(*LEAVE1)
+        add_leave(*LEAVE2)
+        response = requests.get(
+            LEAVE_SCHEDULED_URL + '/' + USER_ID + '/' + LEAVE1[0],
+            headers=HEADERS)
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(len(response.json()), 2)
+
+
+    def test_leave_get_scheduled_nonexistant(self):
+        '''
+        Get scheduled leave for a user that doesn't exist
+        '''
+        clear_leaves()
+
+        response = requests.get(
+            LEAVE_SCHEDULED_URL + '/' + USER_ID + '/' + LEAVE1[0],
+            headers=HEADERS)
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json(), [])
+
+
+    def test_leave_get_scheduled_overlap(self):
+        '''
+        Get scheduled leaves where a leave starts before from date
+        '''
+        clear_leaves()
+
+        add_leave(*LEAVE1)
+        add_leave(*LEAVE2)
+        response = requests.get(
+            LEAVE_SCHEDULED_URL + '/' + USER_ID + '/' + LEAVE1[1],
+            headers=HEADERS)
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(len(response.json()), 2)
 
 
 class LeaveListTests(unittest.TestCase):

@@ -119,6 +119,22 @@ class LeaveModel(db.Model):
         return True
 
 
+    @classmethod
+    def get_leave_from(cls, user_id: int, date_from: datetime) -> List['LeaveModel']:
+        '''
+        Get leave entries for a user starting on a given date moving forward
+        '''
+        return cls.query.filter(
+            and_(
+                cls.user_id == user_id,
+                or_(
+                    cls.start_date >= date_from,
+                    cls.end_date >= date_from
+                )
+            )
+        ).all()
+
+
     @staticmethod
     def get_leave_days(leave: 'LeaveModel') -> int:
         '''
