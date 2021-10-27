@@ -5,6 +5,7 @@ Leave database entry model
 from datetime import datetime, timedelta
 from typing import List
 from sqlalchemy import and_
+from sqlalchemy.sql.expression import nullslast
 
 from backend.models.db import db
 from backend.models.user import UserModel # needed for foreign key relationship
@@ -44,7 +45,7 @@ class LeaveModel(db.Model):
         '''
         Return string representation of the leave entry
         '''
-        dates_str = self.start_date.strftime('%Y-%m-%d') + " - " \
+        dates_str = self.start_date.strftime('%Y-%m-%d') + '-' \
             + self.end_date.strftime('%Y-%m-%d')
         return '<Leave %d, %s>' % (self.user_id, dates_str)
 

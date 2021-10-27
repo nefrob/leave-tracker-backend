@@ -77,7 +77,7 @@ class LeaveTests(unittest.TestCase):
         clear_leaves()
 
         id = add_leave(*LEAVE1)
-        response = requests.put(LEAVE_URL + "/" + str(id),
+        response = requests.put(LEAVE_URL + '/' + str(id),
             json={
                 'start_date': LEAVE2[0],
                 'end_date': LEAVE2[1],
@@ -94,7 +94,7 @@ class LeaveTests(unittest.TestCase):
         clear_leaves()
 
         id = add_leave(*LEAVE1)
-        response = requests.put(LEAVE_URL + "/" + str(id),
+        response = requests.put(LEAVE_URL + '/' + str(id),
             headers=HEADERS)
 
         self.assertEqual(response.status_code, 400)
@@ -125,7 +125,7 @@ class LeaveTests(unittest.TestCase):
         clear_leaves()
 
         id = add_leave(*LEAVE1)
-        response = requests.put(LEAVE_URL + "/" + str(id),
+        response = requests.put(LEAVE_URL + '/' + str(id),
             json={
                 'start_date': LEAVE1[1],
                 'end_date': LEAVE1[0],
@@ -143,7 +143,7 @@ class LeaveTests(unittest.TestCase):
         clear_leaves()
 
         id = add_leave(*LEAVE1)
-        response = requests.put(LEAVE_URL + "/" + str(id),
+        response = requests.put(LEAVE_URL + '/' + str(id),
             json={
                 'start_date': LEAVE_LONG[0],
                 'end_date': LEAVE_LONG[1],
@@ -161,7 +161,7 @@ class LeaveTests(unittest.TestCase):
         clear_leaves()
 
         id = add_leave(*LEAVE1)
-        response = requests.delete(LEAVE_URL + "/" + str(id))
+        response = requests.delete(LEAVE_URL + '/' + str(id))
 
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.json(), {'message': 'Leave deleted'})
@@ -281,7 +281,7 @@ class LeaveRemainingTests(unittest.TestCase):
         clear_leaves()
 
         response = requests.get(
-            LEAVE_REMAINING_URL + "/" + USER_ID + '/' + LEAVE1[0],
+            LEAVE_REMAINING_URL + '/' + USER_ID + '/' + LEAVE1[0],
             headers=HEADERS)
 
         self.assertEqual(response.status_code, 200)

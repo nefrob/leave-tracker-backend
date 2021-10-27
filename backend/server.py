@@ -33,7 +33,7 @@ def create_tables():
 
 
 @app.errorhandler(404)
-def handle_404(e):
+def handle_404(error):
     return jsonify({'message': 'Not found'}), 404
 
 
@@ -50,5 +50,5 @@ def main():
     app.run(debug=True)
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     main()
