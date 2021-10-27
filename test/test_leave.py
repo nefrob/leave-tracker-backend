@@ -5,15 +5,20 @@ Tests for the leave backend restful api.
 import unittest
 import requests
 
+from backend.models.leave import MAX_LEAVE
+
+
 HEADERS = {'Content-Type': 'application/json'}
 
 LEAVE_URL = 'http://localhost:5000/leave'
 LEAVE_CREATE_URL = 'http://localhost:5000/leave/create'
+LEAVE_REMAINING_URL = 'http://localhost:5000/leave/remaining'
 LEAVE_LIST_URL = 'http://localhost:5000/leave/list'
 
 USER_ID = '1'
 LEAVE1 = ('2021-01-01T00:00:00', '2021-01-31T00:00:00')
 LEAVE2 = ('2021-02-01T00:00:00', '2021-02-28T00:00:00')
+LEAVE_LONG = ('2021-01-01T00:00:00', '2021-12-31T00:00:00')
 
 '''
 Helpers
@@ -131,6 +136,24 @@ class LeaveTests(unittest.TestCase):
         self.assertEqual(response.json(), {'message': 'Invalid leave range'})
 
 
+    def test_leave_update_too_long(self):
+        '''
+        Update a leave with a too long range
+        '''
+        clear_leaves()
+
+        id = add_leave(*LEAVE1)
+        response = requests.put(LEAVE_URL + "/" + str(id),
+            json={
+                'start_date': LEAVE_LONG[0],
+                'end_date': LEAVE_LONG[1],
+                'user_id': USER_ID},
+            headers=HEADERS)
+
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.json(), {'message': 'Not enough leave days'})
+
+
     def test_leave_delete(self):
         '''
         Delete a leave
@@ -213,6 +236,58 @@ class LeaveCreateTests(unittest.TestCase):
         self.assertEqual(response.json(), {'message': 'Invalid leave range'})
 
 
+    def test_leave_create_too_long(self):
+        '''
+        Create a leave with a too long range
+        '''
+        clear_leaves()
+
+        response = requests.post(LEAVE_CREATE_URL,
+            json={
+                'start_date': LEAVE_LONG[0],
+                'end_date': LEAVE_LONG[1],
+                'user_id': USER_ID},
+            headers=HEADERS)
+
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.json(), {'message': 'Not enough leave days'})
+
+
+class LeaveRemainingTests(unittest.TestCase):
+    '''
+    Leave remaining unit tests
+    '''
+    def test_leave_remaining(self):
+        '''
+        Get remaining leave for a user
+        '''
+        clear_leaves()
+
+        add_leave(*LEAVE1)
+        response = requests.get(
+            LEAVE_REMAINING_URL + '/' + USER_ID + '/' + LEAVE2[0],
+            headers=HEADERS)
+
+        self.assertEqual(response.status_code, 200)
+
+        # 84 max leave days - 31 days used = 53 remaining
+        self.assertEqual(response.json(), {'remaining': 53})
+
+    
+    def test_leave_remaining_nonexistant(self):
+        '''
+        Get remaining leave for a user that doesn't exist
+        '''
+        clear_leaves()
+
+        response = requests.get(
+            LEAVE_REMAINING_URL + "/" + USER_ID + '/' + LEAVE1[0],
+            headers=HEADERS)
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json(), {'remaining': MAX_LEAVE.days})
+
+
 class LeaveListTests(unittest.TestCase):
     '''
     Leave list unit tests
@@ -221,6 +296,8 @@ class LeaveListTests(unittest.TestCase):
         '''
         Get empty leave list
         '''
+        clear_leaves()
+
         response = requests.get(LEAVE_LIST_URL)
 
         self.assertEqual(response.status_code, 200)
@@ -231,16 +308,27 @@ class LeaveListTests(unittest.TestCase):
         '''
         Get all leaves
         '''
-        pass
+        clear_leaves()
+
+        add_leave(*LEAVE1)
+        add_leave(*LEAVE2)
+
+        response = requests.get(LEAVE_LIST_URL)
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(len(response.json()), 2)
 
 
     def test_leave_list_delete(self):
         '''
         Delete all leaves
         '''
+        clear_leaves()
+
+        add_leave(*LEAVE1)
         response = requests.delete(LEAVE_LIST_URL)
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.json(), {'message': '0 leave(s) deleted'})
+        self.assertEqual(response.json(), {'message': '1 leave(s) deleted'})
 
 
 if __name__ == '__main__':

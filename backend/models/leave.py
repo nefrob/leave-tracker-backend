@@ -2,11 +2,16 @@
 Leave database entry model
 '''
 
-from datetime import datetime
+from datetime import datetime, timedelta
 from typing import List
+from sqlalchemy import and_
 
 from backend.models.db import db
 from backend.models.user import UserModel # needed for foreign key relationship
+
+
+MAX_LEAVE = timedelta(weeks=12)
+LEAVE_PERIOD = timedelta(days=365) # 1 standard year
 
 
 class LeaveModel(db.Model):
@@ -22,6 +27,8 @@ class LeaveModel(db.Model):
 
     # todo: make id the only primary key with an array of start/end dates
     # leaves = db.Column('leaves', db.ARRAY(db.DateTime, dimensions=2), nullable=False)
+    # todo: add remaining leave days
+    # remaining_leave_days = db.Column('remaining_leave_days', db.Integer, nullable=False)
 
 
     def __init__(self, user_id: int, start_date: datetime, end_date: datetime) -> None:
@@ -40,22 +47,6 @@ class LeaveModel(db.Model):
         dates_str = self.start_date.strftime('%Y-%m-%d') + " - " \
             + self.end_date.strftime('%Y-%m-%d')
         return '<Leave %d, %s>' % (self.user_id, dates_str)
-
-
-    @classmethod
-    def str_to_datetime(cls, date_str: str) -> datetime:
-        '''
-        Converts a an iso formatted date string to a datetime object
-        '''
-        return datetime.strptime(date_str, '%Y-%m-%dT%H:%M:%S')
-
-
-    @classmethod
-    def datetime_to_str(cls, date: datetime) -> str:
-        '''
-        Converts a datetime object to an iso formatted date string
-        '''
-        return date.strftime('%Y-%m-%dT%H:%M:%S')
 
 
     @classmethod
@@ -84,6 +75,54 @@ class LeaveModel(db.Model):
         return cls.query.get(id)
 
 
+    @classmethod
+    def get_remaining_leave(cls, user_id: int, date: datetime) -> int:
+        '''
+        Get the number of remaining leave days for a user in the leave
+        year preceding the provided date
+        '''
+        user_leaves = cls.query.filter(
+            and_(cls.user_id == user_id, cls.start_date >= date - LEAVE_PERIOD)
+        ).all()
+
+        # fixme: track leave remaining so we don't have to recalculate
+        days_used = sum([LeaveModel.get_leave_days(leave) for leave in user_leaves])
+
+        return MAX_LEAVE.days - days_used
+
+
+    @staticmethod
+    def get_leave_days(leave: 'LeaveModel') -> int:
+        '''
+        Return leave days used for given leave
+        '''
+        return (leave.end_date - leave.start_date).days + 1
+
+
+    @staticmethod
+    def get_leave_too_long(leave: 'LeaveModel') -> bool:
+        '''
+        Check if leave is too long
+        '''
+        return (leave.end_date - leave.start_date) > MAX_LEAVE
+
+
+    @staticmethod
+    def str_to_datetime(date_str: str) -> datetime:
+        '''
+        Converts a an iso formatted date string to a datetime object
+        '''
+        return datetime.strptime(date_str, '%Y-%m-%dT%H:%M:%S')
+
+
+    @staticmethod
+    def datetime_to_str(date: datetime) -> str:
+        '''
+        Converts a datetime object to an iso formatted date string
+        '''
+        return date.strftime('%Y-%m-%dT%H:%M:%S')
+
+
     def add(self) -> None:
         '''
         Add new leave to the database
@@ -106,3 +145,10 @@ class LeaveModel(db.Model):
         '''
         # fixme: db.session.update(self)
         db.session.commit()
+
+    
+    def rollback(self) -> None:
+        '''
+        Rollback changes to leave in the database
+        '''
+        db.session.rollback()
