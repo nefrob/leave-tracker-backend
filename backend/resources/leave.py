@@ -2,7 +2,7 @@
 Api endpoints for leave management
 '''
 
-from flask import request
+from flask import json, request
 from flask_restful import Resource
 
 from backend.models.leave import LeaveModel
@@ -13,7 +13,7 @@ leave_schema = LeaveSchema()
 leave_list_schema = LeaveSchema(many=True)
 
 
-def update_leave(leave, json_data):
+def update_leave(leave: 'LeaveModel', json_data: json):
     '''
     Update a leave entry
     '''
@@ -28,17 +28,10 @@ def update_leave(leave, json_data):
     if new_start > new_end:
         return {'message': 'Invalid leave range'}, 400
 
-    old_leave_days =  LeaveModel.get_leave_days(leave)
-
     leave.start_date = new_start
     leave.end_date = new_end
 
-    new_leave_days =  LeaveModel.get_leave_days(leave)
-
-    remaining_leave = LeaveModel.get_remaining_leave(
-        leave.user_id, leave.start_date)
-
-    if new_leave_days - old_leave_days > remaining_leave:
+    if not LeaveModel.leave_period_valid(leave):
         leave.rollback()
         return {'message': 'Not enough leave days'}, 400
 
@@ -47,7 +40,7 @@ def update_leave(leave, json_data):
     return leave_schema.dump(leave), 200
 
 
-def create_leave(json_data):
+def create_leave(json_data: json):
     '''
     Create a new leave entry
     '''
@@ -65,11 +58,7 @@ def create_leave(json_data):
     
     leave = LeaveModel(**data)
 
-    remaining_leave = LeaveModel.get_remaining_leave(
-        data['user_id'], data['start_date'])
-    new_leave_days =  LeaveModel.get_leave_days(leave)
-
-    if new_leave_days > remaining_leave:
+    if not LeaveModel.leave_period_valid(leave):
         return {'message': 'Not enough leave days'}, 400
 
     leave.add()
@@ -78,7 +67,7 @@ def create_leave(json_data):
 
 
 class LeaveResource(Resource):
-    def get(self, id):
+    def get(self, id: int):
         '''
         Get leave entry
         '''
@@ -90,7 +79,7 @@ class LeaveResource(Resource):
             return {'message': 'Leave not found'}, 404
 
 
-    def put(self, id):
+    def put(self, id: int):
         '''
         Update leave entry
         '''
@@ -107,7 +96,7 @@ class LeaveResource(Resource):
             return {'message': 'Leave not found'}, 404
     
 
-    def delete(self, id):
+    def delete(self, id: int):
         '''
         Delete leave entry
         '''
@@ -134,13 +123,12 @@ class LeaveCreateResource(Resource):
 
 
 class LeaveRemainingResource(Resource):
-    def get(self, user_id, date_str):
+    def get(self, user_id: int, year: int):
         '''
         Get remaining leave for a user in the leave year preceeding
         the provided date
         '''
-        date = LeaveModel.str_to_datetime(date_str)
-        remaining = LeaveModel.get_remaining_leave(user_id, date)
+        remaining = LeaveModel.get_leave_remaining(user_id, year)
         
         return {'remaining': remaining}, 200
 

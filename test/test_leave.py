@@ -5,7 +5,7 @@ Tests for the leave backend restful api.
 import unittest
 import requests
 
-from backend.models.leave import MAX_LEAVE
+from backend.models.leave import MAX_YEARLY_LEAVE
 
 
 HEADERS = {'Content-Type': 'application/json'}
@@ -19,6 +19,9 @@ USER_ID = '1'
 LEAVE1 = ('2021-01-01T00:00:00', '2021-01-31T00:00:00')
 LEAVE2 = ('2021-02-01T00:00:00', '2021-02-28T00:00:00')
 LEAVE_LONG = ('2021-01-01T00:00:00', '2021-12-31T00:00:00')
+LEAVE_LONG_START_SPLIT = ('2020-06-01T00:00:00', '2021-01-01T00:00:00')
+LEAVE_LONG_END_SPLIT = ('2021-12-31T00:00:00', '2022-06-01T00:00:00')
+
 
 '''
 Helpers
@@ -40,7 +43,7 @@ def add_leave(start_date, end_date):
             'end_date': end_date,
             'user_id': USER_ID},
         headers=HEADERS)
-
+        
     return response.json()['id']
 
 
@@ -120,7 +123,7 @@ class LeaveTests(unittest.TestCase):
 
     def test_leave_update_invalid_dates(self):
         '''
-        Update a leave with invalid dates
+        Update a leave with start date after end date
         '''
         clear_leaves()
 
@@ -147,6 +150,34 @@ class LeaveTests(unittest.TestCase):
             json={
                 'start_date': LEAVE_LONG[0],
                 'end_date': LEAVE_LONG[1],
+                'user_id': USER_ID},
+            headers=HEADERS)
+
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.json(), {'message': 'Not enough leave days'})
+
+
+    def test_leave_update_too_long_split(self):
+        '''
+        Update a leave with a too long range split across two years
+        '''
+        clear_leaves()
+
+        id = add_leave(*LEAVE1)
+        response = requests.put(LEAVE_URL + '/' + str(id),
+            json={
+                'start_date': LEAVE_LONG_START_SPLIT[0],
+                'end_date': LEAVE_LONG_START_SPLIT[1],
+                'user_id': USER_ID},
+            headers=HEADERS)
+
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.json(), {'message': 'Not enough leave days'})
+
+        response = requests.put(LEAVE_URL + '/' + str(id),
+            json={
+                'start_date': LEAVE_LONG_END_SPLIT[0],
+                'end_date': LEAVE_LONG_END_SPLIT[1],
                 'user_id': USER_ID},
             headers=HEADERS)
 
@@ -221,7 +252,7 @@ class LeaveCreateTests(unittest.TestCase):
 
     def test_leave_create_invalid_dates(self):
         '''
-        Create a leave with invalid dates
+        Create a leave with start date after end date
         '''
         clear_leaves()
 
@@ -252,6 +283,33 @@ class LeaveCreateTests(unittest.TestCase):
         self.assertEqual(response.status_code, 400)
         self.assertEqual(response.json(), {'message': 'Not enough leave days'})
 
+   
+    def test_leave_update_too_long_split(self):
+        '''
+        Update a leave with a too long range split across two years
+        '''
+        clear_leaves()
+
+        response = requests.post(LEAVE_CREATE_URL,
+            json={
+                'start_date': LEAVE_LONG_START_SPLIT[0],
+                'end_date': LEAVE_LONG_START_SPLIT[1],
+                'user_id': USER_ID},
+            headers=HEADERS)
+
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.json(), {'message': 'Not enough leave days'})
+            
+        response = requests.post(LEAVE_CREATE_URL,
+            json={
+                'start_date': LEAVE_LONG_END_SPLIT[0],
+                'end_date': LEAVE_LONG_END_SPLIT[1],
+                'user_id': USER_ID},
+            headers=HEADERS)
+
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.json(), {'message': 'Not enough leave days'})
+
 
 class LeaveRemainingTests(unittest.TestCase):
     '''
@@ -265,13 +323,13 @@ class LeaveRemainingTests(unittest.TestCase):
 
         add_leave(*LEAVE1)
         response = requests.get(
-            LEAVE_REMAINING_URL + '/' + USER_ID + '/' + LEAVE2[0],
+            LEAVE_REMAINING_URL + '/' + USER_ID + '/2021',
             headers=HEADERS)
 
         self.assertEqual(response.status_code, 200)
 
-        # 84 max leave days - 31 days used = 53 remaining
-        self.assertEqual(response.json(), {'remaining': 53})
+        # 31 days used in LEAVE1
+        self.assertEqual(response.json(), {'remaining': MAX_YEARLY_LEAVE.days - 31})
 
     
     def test_leave_remaining_nonexistant(self):
@@ -281,11 +339,11 @@ class LeaveRemainingTests(unittest.TestCase):
         clear_leaves()
 
         response = requests.get(
-            LEAVE_REMAINING_URL + '/' + USER_ID + '/' + LEAVE1[0],
+            LEAVE_REMAINING_URL + '/' + USER_ID + '/2021',
             headers=HEADERS)
 
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.json(), {'remaining': MAX_LEAVE.days})
+        self.assertEqual(response.json(), {'remaining': MAX_YEARLY_LEAVE.days})
 
 
 class LeaveListTests(unittest.TestCase):

@@ -4,15 +4,14 @@ Leave database entry model
 
 from datetime import datetime, timedelta
 from typing import List
-from sqlalchemy import and_
+from sqlalchemy import and_, or_
 from sqlalchemy.sql.expression import nullslast
 
 from backend.models.db import db
 from backend.models.user import UserModel # needed for foreign key relationship
 
 
-MAX_LEAVE = timedelta(weeks=12)
-LEAVE_PERIOD = timedelta(days=365) # 1 standard year
+MAX_YEARLY_LEAVE = timedelta(weeks=12)
 
 
 class LeaveModel(db.Model):
@@ -77,19 +76,47 @@ class LeaveModel(db.Model):
 
 
     @classmethod
-    def get_remaining_leave(cls, user_id: int, date: datetime) -> int:
+    def get_leave_remaining(cls, user_id: int, year: int) -> int:
         '''
-        Get the number of remaining leave days for a user in the leave
-        year preceding the provided date
+        Get the number of remaining leave days for a user in the past year
+
+        Assumes a leave can straddle one year boundary for both start/end date
         '''
+        leave_year_start = datetime(year, 1, 1)
+        leave_year_end = datetime(year, 12, 31)
+
         user_leaves = cls.query.filter(
-            and_(cls.user_id == user_id, cls.start_date >= date - LEAVE_PERIOD)
+            and_(
+                cls.user_id == user_id, 
+                or_(
+                    and_(cls.start_date >= leave_year_start,
+                        cls.end_date <= leave_year_end), # in leave year
+                    cls.end_date >= leave_year_start, # starts previous year
+                    cls.start_date <= leave_year_end # ends after year
+                )
+            )
         ).all()
 
-        # fixme: track leave remaining so we don't have to recalculate
-        days_used = sum([LeaveModel.get_leave_days(leave) for leave in user_leaves])
+        days_used = sum([LeaveModel.get_leave_days_in_year(
+            leave.start_date, leave.end_date, year) for leave in user_leaves])
 
-        return MAX_LEAVE.days - days_used
+        return MAX_YEARLY_LEAVE.days - days_used
+
+
+    @classmethod
+    def leave_period_valid(cls, leave: 'LeaveModel') -> bool:
+        '''
+        Check if a leave period does not exceed remaining leave days for the
+        date range it spans
+        '''
+        for year in range(leave.start_date.year, leave.end_date.year + 1):
+            remaining_leave_days = cls.get_leave_remaining(leave.user_id, year)
+            new_leave_days = cls.get_leave_days_in_year(leave.start_date, leave.end_date, year)
+            
+            if remaining_leave_days - new_leave_days < 0:
+                return False
+
+        return True
 
 
     @staticmethod
@@ -101,11 +128,25 @@ class LeaveModel(db.Model):
 
 
     @staticmethod
+    def get_leave_days_in_year(start_date: datetime, end_date: datetime, year: int) -> int:
+        '''
+        Return leave days used for given start and end date in given year
+        '''
+        if start_date.year < year:
+            start_date = datetime(year, 1, 1)
+
+        if end_date.year > year:
+            end_date = datetime(year, 12, 31)
+
+        return (end_date - start_date).days + 1
+
+
+    @staticmethod
     def get_leave_too_long(leave: 'LeaveModel') -> bool:
         '''
         Check if leave is too long
         '''
-        return (leave.end_date - leave.start_date) > MAX_LEAVE
+        return (leave.end_date - leave.start_date) > MAX_YEARLY_LEAVE
 
 
     @staticmethod

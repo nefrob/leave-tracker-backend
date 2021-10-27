@@ -23,7 +23,7 @@ api.add_resource(UserResource, '/user/<int:id>')
 api.add_resource(UserListResource, '/user/list')
 api.add_resource(LeaveResource, '/leave/<int:id>')
 api.add_resource(LeaveCreateResource, '/leave/create')
-api.add_resource(LeaveRemainingResource, '/leave/remaining/<int:user_id>/<string:date_str>')
+api.add_resource(LeaveRemainingResource, '/leave/remaining/<int:user_id>/<int:year>')
 api.add_resource(LeaveListResource, '/leave/list')
 
 
