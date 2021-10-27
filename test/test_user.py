@@ -53,7 +53,7 @@ class UserTests(unittest.TestCase):
         add_user(1)
         response = add_user(1)
         self.assertEqual(response.status_code, 400)
-        self.assertEqual(response.json()['message'], 'User already exists')
+        self.assertEqual(response.json(), {'message': 'User already exists'})
 
 
     def test_user_get(self):
@@ -86,7 +86,7 @@ class UserTests(unittest.TestCase):
         add_user(1)
         response = requests.delete(USER_URL + '/1')
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.json()['message'], 'User deleted')
+        self.assertEqual(response.json(), {'message': 'User deleted'})
 
     
     def test_user_delete_nonexistant(self):
@@ -97,7 +97,7 @@ class UserTests(unittest.TestCase):
 
         response = requests.delete(USER_URL + '/1')
         self.assertEqual(response.status_code, 404)
-        self.assertEqual(response.json()['message'], 'User not found')
+        self.assertEqual(response.json(), {'message': 'User not found'})
 
 
 class UserListTests(unittest.TestCase):
@@ -136,7 +136,7 @@ class UserListTests(unittest.TestCase):
         add_user(1)
         response = requests.delete(USER_LIST_URL)
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.json()['message'], '1 user(s) deleted')
+        self.assertEqual(response.json(), {'message': '1 user(s) deleted'})
 
 
 if __name__ == '__main__':
