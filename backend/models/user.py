@@ -54,7 +54,7 @@ class UserModel(db.Model):
         '''
         Get user from the database
         '''
-        return cls.query.filter(cls.id == id).first()
+        return cls.query.get(id)
 
 
     def add(self) -> None:

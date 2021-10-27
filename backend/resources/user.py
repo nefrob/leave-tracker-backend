@@ -2,7 +2,6 @@
 Api endpoints for user management
 '''
 
-from requests.api import delete
 from flask_restful import Resource
 
 from backend.models.user import UserModel
@@ -18,10 +17,10 @@ class UserResource(Resource):
         '''
         Get user entry
         '''
-        a = UserModel.get_user(id)
+        user = UserModel.get_user(id)
         
-        if a:
-            return user_schema.dump(a), 200
+        if user:
+            return user_schema.dump(user), 200
         else:
             return {'message': 'User not found'}, 404
 

@@ -76,6 +76,14 @@ class LeaveModel(db.Model):
         return deleted
 
 
+    @classmethod
+    def get_leave(cls, id: int) -> 'LeaveModel':
+        '''
+        Get a leave entry from the database
+        '''
+        return cls.query.get(id)
+
+
     def add(self) -> None:
         '''
         Add new leave to the database
