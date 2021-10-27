@@ -6,10 +6,10 @@ from datetime import datetime
 from typing import List
 
 from backend.models.db import db
-from backend.models.user import User # needed for relationship
+from backend.models.user import UserModel # needed for foreign key relationship
 
 
-class Leave(db.Model):
+class LeaveModel(db.Model):
     '''
     Define leave database table
     '''
@@ -43,7 +43,7 @@ class Leave(db.Model):
 
 
     @classmethod
-    def str_to_datetime(cls, date_str) -> datetime:
+    def str_to_datetime(cls, date_str: str) -> datetime:
         '''
         Converts a an iso formatted date string to a datetime object
         '''
@@ -59,11 +59,21 @@ class Leave(db.Model):
 
 
     @classmethod
-    def get_all(cls) -> List['Leave']:
+    def get_all(cls) -> List['LeaveModel']:
         '''
         Dump database contents to a list of User objects
         '''
         return cls.query.all()
+
+
+    @classmethod
+    def delete_all(cls) -> int:
+        '''
+        Delete all leaves from the database
+        '''
+        deleted = cls.query.delete()
+        db.session.commit()
+        return deleted
 
 
     def add(self) -> None:

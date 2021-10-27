@@ -3,11 +3,11 @@ User model schema
 '''
 
 from backend.schemas.ma import ma
-from backend.models.user import User
+from backend.models.user import UserModel
 
 
 class UserSchema(ma.Schema):
     class Meta:
-        model = User
-        fields = ('id')
+        model = UserModel
+        fields = ('id', 'children')
         load_instance = True
