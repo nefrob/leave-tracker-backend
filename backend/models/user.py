@@ -2,67 +2,59 @@
 User database entry model
 '''
 
-from datetime import datetime
 from typing import List
 
 from backend.models.db import db
 
 
-class User(db.Model):
+class UserModel(db.Model):
     '''
-    Define user leave fields
+    Define user database table
     '''
     __tablename__ = 'user_table'
 
     id = db.Column('id', db.Integer, primary_key=True)
-    start_date = db.Column('start_date', db.DateTime, primary_key=True)
-    end_date = db.Column('end_date', db.DateTime, nullable=False)
+    # todo: other user data like username, password hash, etc.
 
-    # todo: make id the only primary key with an array of start/end dates
-    # leaves = db.Column('leaves', db.ARRAY(db.DateTime, dimensions=2), nullable=False)
+    children = db.relationship('LeaveModel', cascade='all,delete')
 
-    # todo: other user data like username, password, etc.
-
-    def __init__(self, id: int, start_date: datetime, end_date: datetime) -> None:
+    def __init__(self) -> None:
         '''
-        Initialize a new user
+        Initialize a new user entry
         '''
-        self.id = id
-        self.start_date = start_date
-        self.end_date = end_date
-        
+        pass
 
     def __repr__(self) -> str:
         '''
-        Return string representation of the user
+        Return string representation of the user entry
         '''
-        dates_str = self.start_date.strftime('%Y-%m-%d') + " - " \
-            + self.end_date.strftime('%Y-%m-%d')
-        return '<Employee %d, leave: %s>' % (self.employee_id, dates_str)
+        return '<User %d>' % (self.id)
 
-
+    
     @classmethod
-    def str_to_datetime(cls, date_str) -> datetime:
+    def get_all(cls) -> List['UserModel']:
         '''
-        Converts a an iso formatted date string to a datetime object
-        '''
-        return datetime.strptime(date_str, '%Y-%m-%dT%H:%M:%S')
-
-
-    @classmethod
-    def datetime_to_str(cls, date: datetime) -> str:
-        '''
-        Converts a datetime object to an iso formatted date string
-        '''
-        return date.strftime('%Y-%m-%dT%H:%M:%S')
-
-
-    @classmethod
-    def get_all(cls) -> List['User']:
-        '''
-        Dump database contents to a list of User objects
+        Get all user entries from the database
         '''
         return cls.query.all()
+
+
+    @classmethod
+    def delete_all(cls) -> int:
+        '''
+        Delete all user entries from the database
+        '''
+        deleted = cls.query.delete()
+        db.session.commit()
+        return deleted
+
+
+    @classmethod
+    def get_user(cls, id: int) -> 'UserModel':
+        '''
+        Get user from the database
+        '''
+        return cls.query.get(id)
 
 
     def add(self) -> None:
