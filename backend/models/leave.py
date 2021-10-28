@@ -96,13 +96,8 @@ class LeaveModel(db.Model):
             )
         ).all()
 
-        print(user_leaves)
-
         days_used = sum([LeaveModel.get_leave_days_in_year(
             leave.start_date, leave.end_date, year) for leave in user_leaves])
-
-        print('days used:', days_used)
-        print('max yearly leave:', MAX_YEARLY_LEAVE.days)
 
         return MAX_YEARLY_LEAVE.days - days_used
 
