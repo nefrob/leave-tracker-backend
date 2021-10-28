@@ -13,6 +13,6 @@ setup(
     url='https://github.com/nefrob/leave-tracker-backend',
     zip_safe = False,
     install_requires=['flask', 'flask_restful', 'flask_sqlalchemy', \
-        'flask_marshmallow', 'sqlalchemy', 'marshmallow'],
+        'flask_marshmallow', 'flask_cors', 'sqlalchemy', 'marshmallow'],
     python_requires='>=3.7'
 )

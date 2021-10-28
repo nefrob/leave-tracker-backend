@@ -3,6 +3,7 @@ Sets up and runs RESTful API server
 '''
 
 from flask import Flask, Blueprint, jsonify
+from flask_cors import CORS
 from flask_restful import Api
 from marshmallow import ValidationError
 
@@ -13,6 +14,7 @@ from backend.resources.leave import LeaveResource, LeaveCreateResource, \
     LeaveRemainingResource, LeaveScheduledResource, LeaveListResource
 
 app = Flask(__name__)
+CORS(app) # disable cross site blockcing
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///:memory:' # use memory for debug
 
 bluePrint = Blueprint('api', __name__)

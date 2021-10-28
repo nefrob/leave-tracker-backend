@@ -4,7 +4,7 @@ Leave database entry model
 
 from datetime import datetime, timedelta
 from typing import List
-from sqlalchemy import and_, or_
+from sqlalchemy import and_, or_, extract
 
 from backend.models.db import db
 from backend.models.user import UserModel # needed for foreign key relationship
@@ -90,14 +90,19 @@ class LeaveModel(db.Model):
                 or_(
                     and_(cls.start_date >= leave_year_start,
                         cls.end_date <= leave_year_end), # in leave year
-                    cls.end_date >= leave_year_start, # starts previous year
-                    cls.start_date <= leave_year_end # ends after year
+                    extract('year', cls.end_date) == leave_year_start.year + 1, # starts previous year
+                    extract('year', cls.start_date) == leave_year_end.year # ends after year
                 )
             )
         ).all()
 
+        print(user_leaves)
+
         days_used = sum([LeaveModel.get_leave_days_in_year(
             leave.start_date, leave.end_date, year) for leave in user_leaves])
+
+        print('days used:', days_used)
+        print('max yearly leave:', MAX_YEARLY_LEAVE.days)
 
         return MAX_YEARLY_LEAVE.days - days_used
 
@@ -149,6 +154,9 @@ class LeaveModel(db.Model):
         '''
         Return leave days used for given start and end date in given year
         '''
+        if not (start_date.year <= year and end_date.year >= year):
+            return 0
+
         if start_date.year < year:
             start_date = datetime(year, 1, 1)
 
